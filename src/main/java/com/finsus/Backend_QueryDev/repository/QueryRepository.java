@@ -35,9 +35,6 @@ public class QueryRepository {
     //private final static String URL_IMAGE = "http://74.208.84.208:8080/";
     //private final static String URL_MW = "http://172.17.100.22:2048/";
 
-    @Autowired
-    private JdbcTemplate jdbcTemplate;
-
     @PersistenceContext
     private EntityManager entityManager;
 
@@ -67,24 +64,6 @@ public class QueryRepository {
             return null;
         }
     }
-
-    /*@SuppressWarnings("deprecation")
-    public String[] getAmount(String phone) {
-        String sql = "SELECT a.amount, b.points FROM datapersonal AS b INNER JOIN appdata AS a ON a.curp = b.curp WHERE b.phone = ? AND a.branchOffice = ?";
-        try {
-            return jdbcTemplate.queryForObject(sql, new Object[]{phone, 100}, (rs, rowNum) -> {
-                String[] amount = new String[2];
-                amount[0] = rs.getString("amount");
-                amount[1] = rs.getString("points");
-                return amount;
-            });
-        } catch (EmptyResultDataAccessException e) {
-            return null;
-        } catch (Exception e) {
-            System.out.println("Error al obtener monto: " + e.getMessage());
-            return null;
-        }
-    }*/
 
     public ResponseQueryAmount getUser(String phone) {
         ResponseQueryAmount user = null;
@@ -127,40 +106,7 @@ public class QueryRepository {
         }
         return user;
     }
-    /*public ResponseQueryAmount getUser(String phone) {
-        ResponseQueryAmount user = null;
-        String sql = "SELECT CONCAT(name, ' ', paternal, ' ', maternal) AS nameComplete, interbankKey, status, email, idAsociado, datapersonal.curp FROM datapersonal JOIN appdata ON appdata.curp = datapersonal.curp WHERE phone = ? AND branchOffice = ?";
-        try {
-            List<Map<String, Object>> result = jdbcTemplate.queryForList(sql, phone, 100);
 
-            if (!result.isEmpty()) {
-                Map<String, Object> row = result.get(0); //primer dato
-
-                String nameComplete = row.get("nameComplete").toString();
-                String interbankKey = (String) row.get("interbankKey");
-                String status = (String) row.get("status").toString();
-                String email = (String) row.get("email");
-                String idAsociado = row.get("idAsociado").toString();
-                String curp = (String) row.get("curp");
-
-                user = new ResponseQueryAmount(
-                    nameComplete,
-                    interbankKey,
-                    status,
-                    email,
-                    idAsociado,
-                    curp,
-                    getImages(idAsociado)
-                );
-            }
-
-        } catch (Exception e) {
-            System.out.println("Error: " + e.getMessage());
-        }
-        return user;
-    }
-*/
-    
     public Images getImages(String idAsociado) {
         OkHttpClient client = new OkHttpClient().newBuilder().connectTimeout(10, TimeUnit.SECONDS)
                 .writeTimeout(30, TimeUnit.SECONDS).readTimeout(30, TimeUnit.SECONDS).build();
