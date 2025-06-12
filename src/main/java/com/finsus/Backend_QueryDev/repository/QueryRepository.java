@@ -4,10 +4,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.finsus.Backend_QueryDev.model.ContentVideo;
 import com.finsus.Backend_QueryDev.model.Images;
 import com.finsus.Backend_QueryDev.responses.ResponseQueryAmount;
+
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
@@ -19,12 +19,13 @@ import okhttp3.Response;
 
 import java.io.IOException;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import static java.sql.DriverManager.getConnection;
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
+import javax.persistence.Query;
 
 @Repository
 public class QueryRepository {
@@ -37,7 +38,37 @@ public class QueryRepository {
     @Autowired
     private JdbcTemplate jdbcTemplate;
 
-    @SuppressWarnings("deprecation")
+    @PersistenceContext
+    private EntityManager entityManager;
+
+    public String[] getAmount(String phone) {
+        String sql = "SELECT a.amount, b.points FROM datapersonal AS b " +
+                     "INNER JOIN appdata AS a ON a.curp = b.curp " +
+                     "WHERE b.phone = ? AND a.branchOffice = ?";
+        try {
+            Query query = entityManager.createNativeQuery(sql);
+            query.setParameter(1, phone);
+            query.setParameter(2, 100);
+
+            List<Object[]> result = query.getResultList();
+
+            if (result.isEmpty()) {
+                return null;
+            }
+
+            Object[] row = result.get(0);
+            String[] amount = new String[2];
+            amount[0] = row[0] != null ? row[0].toString() : null;
+            amount[1] = row[1] != null ? row[1].toString() : null;
+
+            return amount;
+        } catch (Exception e) {
+            System.out.println("Error al obtener monto: " + e.getMessage());
+            return null;
+        }
+    }
+
+    /*@SuppressWarnings("deprecation")
     public String[] getAmount(String phone) {
         String sql = "SELECT a.amount, b.points FROM datapersonal AS b INNER JOIN appdata AS a ON a.curp = b.curp WHERE b.phone = ? AND a.branchOffice = ?";
         try {
@@ -53,9 +84,50 @@ public class QueryRepository {
             System.out.println("Error al obtener monto: " + e.getMessage());
             return null;
         }
-    }
+    }*/
 
     public ResponseQueryAmount getUser(String phone) {
+        ResponseQueryAmount user = null;
+        String sql = "SELECT CONCAT(name, ' ', paternal, ' ', maternal) AS nameComplete, " +
+                     "interbankKey, status, email, idAsociado, datapersonal.curp " +
+                     "FROM datapersonal " +
+                     "JOIN appdata ON appdata.curp = datapersonal.curp " +
+                     "WHERE phone = ? AND branchOffice = ?";
+
+        try {
+            Query query = entityManager.createNativeQuery(sql);
+            query.setParameter(1, phone);
+            query.setParameter(2, 100);
+
+            List<Object[]> result = query.getResultList();
+
+            if (!result.isEmpty()) {
+                Object[] row = result.get(0);
+
+                String nameComplete = (String) row[0];
+                String interbankKey = (String) row[1];
+                String status = (String) row[2].toString();
+                String email = (String) row[3];
+                String idAsociado = row[4].toString();
+                String curp = (String) row[5];
+
+                user = new ResponseQueryAmount(
+                    nameComplete,
+                    interbankKey,
+                    status,
+                    email,
+                    idAsociado,
+                    curp,
+                    getImages(idAsociado)
+                );
+            }
+
+        } catch (Exception e) {
+            System.out.println("Error: " + e.getMessage());
+        }
+        return user;
+    }
+    /*public ResponseQueryAmount getUser(String phone) {
         ResponseQueryAmount user = null;
         String sql = "SELECT CONCAT(name, ' ', paternal, ' ', maternal) AS nameComplete, interbankKey, status, email, idAsociado, datapersonal.curp FROM datapersonal JOIN appdata ON appdata.curp = datapersonal.curp WHERE phone = ? AND branchOffice = ?";
         try {
@@ -87,7 +159,8 @@ public class QueryRepository {
         }
         return user;
     }
-
+*/
+    
     public Images getImages(String idAsociado) {
         OkHttpClient client = new OkHttpClient().newBuilder().connectTimeout(10, TimeUnit.SECONDS)
                 .writeTimeout(30, TimeUnit.SECONDS).readTimeout(30, TimeUnit.SECONDS).build();
