@@ -39,12 +39,7 @@ public class QueryRepository {
 
     @SuppressWarnings("deprecation")
     public String[] getAmount(String phone) {
-        String sql = """
-                        SELECT a.amount, b.points 
-                        FROM datapersonal AS b 
-                        INNER JOIN appdata AS a ON a.curp = b.curp 
-                        WHERE b.phone = ? AND a.branchOffice = ?
-                    """;
+        String sql = "SELECT a.amount, b.points FROM datapersonal AS b INNER JOIN appdata AS a ON a.curp = b.curp WHERE b.phone = ? AND a.branchOffice = ?";
         try {
             return jdbcTemplate.queryForObject(sql, new Object[]{phone, 100}, (rs, rowNum) -> {
                 String[] amount = new String[2];
@@ -62,18 +57,7 @@ public class QueryRepository {
 
     public ResponseQueryAmount getUser(String phone) {
         ResponseQueryAmount user = null;
-        String sql = """
-                        SELECT 
-                            CONCAT(name, ' ', paternal, ' ', maternal) AS nameComplete,
-                            interbankKey,
-                            status,
-                            email,
-                            idAsociado,
-                            datapersonal.curp
-                        FROM datapersonal
-                        JOIN appdata ON appdata.curp = datapersonal.curp
-                        WHERE phone = ? AND branchOffice = ?
-                    """;
+        String sql = "SELECT CONCAT(name, ' ', paternal, ' ', maternal) AS nameComplete, interbankKey, status, email, idAsociado, datapersonal.curp FROM datapersonal JOIN appdata ON appdata.curp = datapersonal.curp WHERE phone = ? AND branchOffice = ?";
         try {
             List<Map<String, Object>> result = jdbcTemplate.queryForList(sql, phone, 100);
 
