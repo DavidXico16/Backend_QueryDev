@@ -1,2 +1,2 @@
 # Backend_QueryDev
-nuevo poryecto de netbeas a spring
+Proyecto en Spring para consulta de saldo del cliente
